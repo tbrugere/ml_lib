@@ -178,15 +178,21 @@ class AutoTarDataset(TarDataset):
         from math import log10, ceil
 
         n_digits = int(ceil(log10(len(dataset))))
-        with tarfile.open(tar_file, "w") as tar:
-            for i, point in enumerate(dataset):
-                tar_filename = f"{i:0{n_digits}d}.npz"
-                bytes_io = io.BytesIO()
-                np.savez(bytes_io, **point.asdict())
-                add_file_to_tarfile(tar, bytes_io, tar_filename)
-            metadata = dataset.dataset_parameters()
-            metadata_file = io.BytesIO(yaml.dump(metadata).encode())
-            add_file_to_tarfile(tar, metadata_file, cls.metadata_file)
+        try: 
+            with tarfile.open(tar_file, "w") as tar:
+                for i, point in enumerate(dataset):
+                    tar_filename = f"{i:0{n_digits}d}.npz"
+                    bytes_io = io.BytesIO()
+                    np.savez(bytes_io, **point.asdict())
+                    add_file_to_tarfile(tar, bytes_io, tar_filename)
+                metadata = dataset.dataset_parameters()
+                metadata_file = io.BytesIO(yaml.dump(metadata).encode())
+                add_file_to_tarfile(tar, metadata_file, cls.metadata_file)
+        except:
+            # if something goes wrong
+            # we don't want to leave a half-written file
+            Path(tar_file).unlink()
+            raise
 
 
 
