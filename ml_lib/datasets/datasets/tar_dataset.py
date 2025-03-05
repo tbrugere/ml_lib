@@ -173,14 +173,19 @@ class AutoTarDataset(TarDataset):
         return self.datatype(**result)
 
     @classmethod
-    def save_dataset(cls, tar_file: PathLike, dataset: Dataset):
+    def save_dataset(cls, tar_file: PathLike, dataset: Dataset, pbar=None):
         import numpy as np
         from math import log10, ceil
 
         n_digits = int(ceil(log10(len(dataset))))
         try: 
             with tarfile.open(tar_file, "w") as tar:
-                for i, point in enumerate(dataset):
+                iterator = enumerate(dataset)
+                if pbar is not None:
+                    if isinstance(pbar, bool) and pbar:
+                        from tqdm.auto import tqdm as pbar
+                    iterator = pbar(enumerate(dataset), total=len(dataset))
+                for i, point in iterator:
                     tar_filename = f"{i:0{n_digits}d}.npz"
                     bytes_io = io.BytesIO()
                     np.savez(bytes_io, **point.asdict())
